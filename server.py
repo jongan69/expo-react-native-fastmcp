@@ -1,13 +1,26 @@
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.resources.types import FileResource
 from pathlib import Path
+from rapidfuzz import fuzz
 import datetime
 import yaml
-from rapidfuzz import fuzz
 import logging
+import threading
 
+# Initialize MCP server
 mcp = FastMCP("React Native Expo Markdown Documentation Server")
 docs_dir = Path("docs")
+
+# Load embedding model (using Sentence Transformers)
+embedding_model = None
+vector_dim = 384  # For all-MiniLM-L6-v2
+faiss_index = None
+doc_vectors = []
+doc_filenames = []
+model_ready = False
 
 # Setup logging
 logging.basicConfig(filename="mcp_server_queries.log", level=logging.INFO, format="%(asctime)s %(message)s")
@@ -36,6 +49,8 @@ def get_file_metadata(file: Path):
     last_modified = datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()
     return {"last_modified": last_modified}
 
+# Register resources and load all docs
+all_docs = []
 def register_markdown_resources():
     if not docs_dir.exists():
         return
@@ -65,8 +80,27 @@ def register_markdown_resources():
                 mime_type="text/markdown",
             )
         )
+# register markdown resources
+register_markdown_resources()  
+        
+def build_faiss_index():
+    global doc_vectors, doc_filenames
+    for file in docs_dir.glob("*.md"):
+        try:
+            content = file.read_text(encoding="utf-8")
+            embedding = embedding_model.encode(content, convert_to_numpy=True).astype("float32")
+            faiss_index.add(np.array([embedding]))
+            doc_vectors.append(embedding)
+            doc_filenames.append(file.stem)
+        except Exception as e:
+            logging.warning(f"FAISS embedding error on {file.name}: {e}")
 
-register_markdown_resources()
+def init_heavy_stuff():
+    global embedding_model, faiss_index, model_ready
+    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    faiss_index = faiss.IndexFlatL2(vector_dim)
+    build_faiss_index()
+    model_ready = True
 
 @mcp.tool(description="Search documentation for a keyword and return ranked filenames with context snippets.")
 def search_docs(keyword: str) -> list[dict]:
@@ -162,6 +196,35 @@ def get_doc_content(filename: str) -> str:
         return file.read_text(encoding="utf-8")
     return ""
 
+@mcp.tool(description="Semantic vector search on documentation content.")
+def semantic_search_docs(query: str, top_k: int = 5) -> list[dict]:
+    logging.info(f"semantic_search_docs: {query}")
+    if not model_ready:
+        return [{"error": "Model and index are still loading, please try again in a moment."}]
+    if faiss_index.ntotal == 0:
+        return [{"error": "FAISS index is empty"}]
+    query_vector = embedding_model.encode(query, convert_to_numpy=True).astype("float32")
+    D, I = faiss_index.search(np.array([query_vector]), k=top_k)
+    results = []
+    for dist, idx in zip(D[0], I[0]):
+        if idx == -1:
+            continue
+        filename = doc_filenames[idx]
+        file = docs_dir / f"{filename}.md"
+        snippet = file.read_text(encoding="utf-8")[:200].replace('\n', ' ')
+        tags, version = extract_tags_and_version(file)
+        results.append({
+            "filename": filename,
+            "score": float(dist),
+            "snippet": snippet,
+            "tags": tags,
+            "version": version,
+            "last_modified": get_file_metadata(file)["last_modified"],
+        })
+    return results
+
+# build FAISS index
+
 if __name__ == "__main__":
+    threading.Thread(target=init_heavy_stuff, daemon=True).start()
     mcp.run(transport="stdio")
-    # mcp.run()
