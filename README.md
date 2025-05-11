@@ -1,6 +1,6 @@
-# 📚 Markdown Documentation Server (MCP)
+# 📚 Expo React Native Markdown Documentation Server (MCP)
 
-A fast, extensible, and intelligent documentation server for Markdown files, powered by the MCP framework.
+A fast, extensible, and intelligent documentation server for Markdown files using React Native Expo Documentation, powered by the MCP framework.
 
 ---
 
@@ -18,14 +18,15 @@ A fast, extensible, and intelligent documentation server for Markdown files, pow
 
 ---
 
-## ��️ Project Structure
+## 🏗️ Project Structure
 
 ```
 .
 ├── server.py         # Main server code (this file)
 ├── docs/            # Place your Markdown documentation here
 │   └── *.md
-├── mcp_server_queries.log  # Query logs
+├── sitemap_scrape.py  # Scrapes Expo and React Native Sitemaps for Documentation URLS and saves to sitemaps_urls.json
+├── scrape_markdown.py  # Scrapes sitemaps_urls.json URLs and saves the data as *.md files in /docs
 └── README.md
 ```
 
@@ -35,7 +36,8 @@ A fast, extensible, and intelligent documentation server for Markdown files, pow
 
 ### 1. Add Your Documentation
 
-Place your Markdown files in the `docs/` directory.  
+Place your Markdown files in the `docs/` directory or use `sitemap_scrape.py` and `scrape_markdown.py` to generate *.md files from a sitemap url.  
+
 Optionally, add YAML frontmatter for tags and versioning:
 
 ```markdown
@@ -51,8 +53,10 @@ Welcome to the docs!
 
 ### 2. Start the Server
 
+Note: use `source .venv/bin/activate` to activate the python enviornment 
+
 ```bash
-python server.py
+ uv run mcp dev server.py 
 ```
 
 The server runs using MCP's `stdio` transport by default.
@@ -66,7 +70,7 @@ All tools are exposed via the MCP tool interface:
 ### `search_docs(keyword: str)`
 
 - **Description:** Search for a keyword in all docs. Returns ranked filenames with context snippets.
-- **Returns:**  
+- **Returns:**
   - `filename`
   - `matches` (count)
   - `snippet`
@@ -79,7 +83,7 @@ All tools are exposed via the MCP tool interface:
 ### `fuzzy_search_docs(keyword: str, threshold: int = 70)`
 
 - **Description:** Typo-tolerant search using rapidfuzz. Returns ranked results with context.
-- **Returns:**  
+- **Returns:**
   - `filename`
   - `score`
   - `snippet`
@@ -92,7 +96,7 @@ All tools are exposed via the MCP tool interface:
 ### `advanced_search(keyword: str = "", tag: str = "", after: str = "")`
 
 - **Description:** Search by keyword, tag, or last modified date (ISO format).
-- **Returns:**  
+- **Returns:**
   - `filename`
   - `matches`
   - `snippet`
@@ -163,5 +167,4 @@ MIT License
 
 ## ✨ Credits
 
-Built with [MCP](https://github.com/multiprocessio/mcp) and ❤️ by your team.
-# expo-react-native-fastmcp
+Built with [MCP](https://github.com/multiprocessio/mcp) and ❤️ by yours truly.
