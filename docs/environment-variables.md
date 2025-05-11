@@ -1,0 +1,284 @@
+Environment variables in Expo - Expo Documentation
+
+[Docs](/)
+
+[Blog](https://expo.dev/blog)[Changelog](https://expo.dev/changelog)[Star Us on GitHub](https://github.com/expo/expo)
+
+Search
+
+[Home](/)[Guides](/guides/overview)[EAS](/eas)[Reference](/versions/latest)[Learn](/tutorial/overview)
+
+[Overview](/guides/overview)
+
+Development process
+
+[Develop an app with Expo](/workflow/overview)[Configure with app config](/workflow/configuration)[Continuous Native Generation](/workflow/continuous-native-generation)[Using libraries](/workflow/using-libraries)[Privacy manifests](/guides/apple-privacy)[Permissions](/guides/permissions)[Environment variables](/guides/environment-variables)
+
+Linking
+
+Write native code
+
+Compile locally
+
+Web
+
+Bundling
+
+Existing React Native apps
+
+Existing native apps
+
+Reference
+
+Expo Router
+
+[Introduction](/router/introduction)[Installation](/router/installation)
+
+Router 101
+
+Navigation patterns
+
+Advanced
+
+Reference
+
+Migration
+
+Expo Modules API
+
+[Overview](/modules/overview)[Get started](/modules/get-started)
+
+Tutorials
+
+Reference
+
+Push notifications
+
+[Overview](/push-notifications/overview)[About notification types](/push-notifications/what-you-need-to-know)[Expo push notifications setup](/push-notifications/push-notifications-setup)[Send notifications with the Expo Push Service](/push-notifications/sending-notifications)[Handle incoming notifications](/push-notifications/receiving-notifications)
+
+Reference
+
+More
+
+[Upgrade Expo SDK](/workflow/upgrading-expo-sdk-walkthrough)
+
+Assorted
+
+Integrations
+
+Troubleshooting
+
+Regulatory compliance
+
+[Data and Privacy protection](/regulatory-compliance/data-and-privacy-protection)[GDPR compliance](/regulatory-compliance/gdpr)[HIPAA compliance](/regulatory-compliance/hipaa)[Privacy Shield](/regulatory-compliance/privacy-shield)
+
+[Archive](/archive)[Expo Snack](https://snack.expo.dev)[Discord and Forums](https://chat.expo.dev)[Newsletter](https://expo.dev/mailing-list/signup)
+
+Environment variables in Expo
+=============================
+
+[Edit this page](https://github.com/expo/expo/edit/main/docs/pages/guides/environment-variables.mdx)
+
+Learn how to use environment variables in an Expo project.
+
+[Edit this page](https://github.com/expo/expo/edit/main/docs/pages/guides/environment-variables.mdx)
+
+---
+
+Environment variables are key-value pairs configured outside your source code that allow your app to behave differently depending on the environment. For example, you can enable or disable certain features when building a test version of your app, or switch to a different API endpoint when building for production.
+
+The Expo CLI will automatically load environment variables with an `EXPO_PUBLIC_` prefix from .env files for use within your JavaScript code whenever you use the Expo CLI, such as when running `npx expo start` to start your app in local development mode.
+
+Reading environment variables from .env files
+---------------------------------------------
+
+Create a .env file in the root of your project directory and add environment-specific variables on new lines in the form of `EXPO_PUBLIC_[NAME]=VALUE`:
+
+.env
+
+Copy
+
+```
+EXPO_PUBLIC_API_URL=https://staging.example.com
+EXPO_PUBLIC_API_KEY=abc123
+
+```
+
+Now you can use environment variables directly in your source code:
+
+```
+import { Button } from 'react-native';
+
+function Post() {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  async function onPress() {
+    await fetch(apiUrl, { ... })
+  }
+
+  return <Button onPress={onPress} title="Post" />;
+}
+
+```
+
+When you run `npx expo start`, `process.env.EXPO_PUBLIC_API_URL` will be replaced with `https://staging.example.com` in your app bundle. Variables can be updated as you edit your code without restarting the Expo CLI or clearing the cache. You will need to perform a full reload (for example, shake gesture and then Reload in Expo Go or your development build) to see the updated value.
+
+> Do not store sensitive info, such as private keys, in `EXPO_PUBLIC_` variables. These variables will be visible in plain-text in your compiled application.
+
+### How variables are loaded
+
+Expo CLI loads .env files according to the [standard .env file resolution](https://github.com/bkeepers/dotenv/blob/c6e583a/README.md#what-other-env-files-can-i-use) and then replaces all references in your code to `process.env.EXPO_PUBLIC_[VARNAME]` with the corresponding value set in the .env files. Code inside node\_modules is not affected for security purposes.
+
+### How to read from environment variables
+
+* Every environment variable must be statically referenced as a property of
+  `process.env` using JavaScript's dot notation for it to be inlined. For example, the expression
+  `process.env.EXPO_PUBLIC_KEY` is valid and will be inlined.
+* Alternative versions of the expression are not supported. For example,
+  `process.env['EXPO_PUBLIC_KEY']` or `const {EXPO_PUBLIC_X} = process.env` is invalid and will not
+  be inlined.
+
+### Using multiple .env files to define separate environments
+
+You can define any of the [standard .env files](https://github.com/bkeepers/dotenv/blob/c6e583a/README.md#what-other-env-files-can-i-use), so it is possible to have separate .env and .env.local, files and they will load according to the standard priority.
+
+You may choose to commit the default .env file or other standard configurations, but generally .env.local files should be added to your .gitignore, because they are used to specify environment configuration specific to your local machine (such as, for example, your network IP address if you need it to make a request against a local server).
+
+.gitignore
+
+Copy
+
+```
+.env*.local
+
+```
+
+#### Environment variables and `NODE_ENV`
+
+We recommend against using `NODE_ENV` to switch between .env files (such as .env.test and .env.production). While it is technically possible (`NODE_ENV=test npx expo start` will load .env.test) â it may not behave as you would expect. For example, `npx expo export` always forces `NODE_ENV` to `production`, so `NODE_ENV=test npx expo export` will not actually run the command with the `NODE_ENV` set to `test`.
+
+Other tools that build on top of Expo CLI commands will exhibit the same behavior â for example, `eas update` calls into `npx expo export` and, as a result, `NODE_ENV=test eas update` will similarly not run with the `NODE_ENV` set to `test` (it will be `production`). The `NODE_ENV` environment variable is used by many tools in different ways (for example, if you run `NODE_ENV=production npm install` then your `devDependencies` will not be installed) and we have found that for React Native projects, it's best not to overload it further for this use case.
+
+If you use EAS, consider using `eas env:pull` instead. This will swap your .env.local with an environment of your choice, rather than depending on `NODE_ENV`. You can accomplish a similar behavior without EAS by writing a script to overwrite .env.local or .env with the appropriate contents for the environment you wish to work with.
+
+### Disabling environment variables
+
+Environment variables in Expo CLI have two parts and both can be disabled:
+
+1. Expo CLI automatically loads the .env files into the global process. To disable this behavior, set the environment variable `EXPO_NO_DOTENV` to `1` before running any Expo CLI command: `EXPO_NO_DOTENV=1`.
+2. Expo's Metro config includes the inline serialization of environment variables in the client JavaScript bundle. To disable this behavior, you can use `EXPO_NO_CLIENT_ENV_VARS=1`.
+
+If you're experiencing issues with environment variables, you can try disabling one or both of these features.
+
+Environment variables in Expo Application Services
+--------------------------------------------------
+
+### EAS Build
+
+[EAS Build](/build/introduction) uses Metro Bundler to build the JavaScript bundle embedded within your app binary, so it will use .env files uploaded with your build job to inline `EXPO_PUBLIC_` variables into your code. EAS Build also lets you define environment variables within build profiles in eas.json and via EAS Secrets. Check out the EAS Build documentation on [environment variables and build secrets](/build-reference/variables) for more information.
+
+### EAS Update
+
+[EAS Update](/eas-update/introduction) uses Metro Bundler in your local environment or CI to build your app bundle, so it will use available .env files to inline `EXPO_PUBLIC_` variables into your code. Check out the EAS Update documentation on [environment variables](/eas-update/environment-variables) for more information.
+
+Migrating to Expo environment variables
+---------------------------------------
+
+### From react-native-config
+
+Update your .env files to prefix any variables used within your JavaScript code with `EXPO_PUBLIC_`:
+
+.env
+
+Copy
+
+```
+- API_URL=https://myapi.com
++ EXPO_PUBLIC_API_URL=https://myapi.com
+
+```
+
+> If you have any non-standard .env files (for example, .env.staging), you will need to migrate those to one of the [standard .env files](https://github.com/bkeepers/dotenv/blob/c6e583a/README.md#what-other-env-files-can-i-use).
+
+Then update your code to use `process.env.EXPO_PUBLIC_[VARNAME]`:
+
+```
+- import Config from 'react-native-config';
+
+- const apiUrl = Config.API_URL;
++ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+```
+
+### From babel-plugin-transform-inline-environment-variables
+
+Using a Babel plugin to transform your environment variable references in your code is similar to how Expo environment variables work. Set your variables inside a .env file and update your variable names to use the `EXPO_PUBLIC_` prefix:
+
+```
+- const apiUrl = process.env.API_URL;
++ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+```
+
+Then you can remove the plugin from your [Babel config](/versions/latest/config/babel):
+
+babel.config.js
+
+Copy
+
+```
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+--    plugins: ['transform-inline-environment-variables'],
+  };
+};
+
+```
+
+After updating your Babel config file, be sure to clear your cache with `npx expo start --clear`.
+
+### From direnv
+
+Move any environment variables used in your JavaScript from their .envrc file to a .env file and prefix it with `EXPO_PUBLIC_`.
+
+Previously with `direnv`, you would need to use a [dynamic app config](/versions/latest/config/app#app-config) that reads from [`process.env`](https://nodejs.org/dist/latest/docs/api/process.html#process_process_env) to set environment variables on the `extra` field so they can be used in your JavaScript code via [`expo-constants`](/versions/latest/sdk/constants). Move those references directly into your code, adding the `EXPO_PUBLIC_` prefix:
+
+```
+- import Constants from 'expo-constants';
+
+- const apiUrl = Constants.expoConfig.extra.apiUrl;
++ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+```
+
+> [`direnv`](https://direnv.net/) automatically loads and unloads environment variables in your shell depending on your current directory, meaning it can affect the environment for any process running in that directly, not just the Expo CLI. You will likely want to continue using `direnv` for other environment variables that are not used in your JavaScript code.
+
+Security considerations
+-----------------------
+
+Never store sensitive secrets in environment variables that are prefixed with `EXPO_PUBLIC_`. When an end-user runs your app, they have access to all of the code and embedded environment variables in your app. Read more about [storing sensitive info](https://reactnative.dev/docs/security#storing-sensitive-info).
+
+[Previous (Development process)
+
+Permissions](/guides/permissions)[Next (Development process - Linking)
+
+Overview](/linking/overview)
+
+Was this doc helpful?
+
+* Share your feedback
+* [Ask a question on the forums](https://chat.expo.dev/)
+* [Edit this page](https://github.com/expo/expo/edit/main/docs/pages/guides/environment-variables.mdx)
+* Last updated on March 24, 2025
+
+Sign up for the Expo Newsletter
+
+Sign Up
+
+Unsubscribe at any time. Read our [privacy policy](https://expo.dev/privacy).
+
+On this page
+
+[Reading environment variables from .env files](/guides/environment-variables/#reading-environment-variables-from-env-files)[How variables are loaded](/guides/environment-variables/#how-variables-are-loaded)[How to read from environment variables](/guides/environment-variables/#how-to-read-from-environment-variables)[Using multiple .env files to define separate environments](/guides/environment-variables/#using-multiple-env-files-to-define-separate-environments)[Disabling environment variables](/guides/environment-variables/#disabling-environment-variables)[Environment variables in Expo Application Services](/guides/environment-variables/#environment-variables-in-expo-application-services)[EAS Build](/guides/environment-variables/#eas-build)[EAS Update](/guides/environment-variables/#eas-update)[Migrating to Expo environment variables](/guides/environment-variables/#migrating-to-expo-environment-variables)[From react-native-config](/guides/environment-variables/#from-react-native-config)[From babel-plugin-transform-inline-environment-variables](/guides/environment-variables/#from-babel-plugin-transform-inline-environment-variables)[From direnv](/guides/environment-variables/#from-direnv)[Security considerations](/guides/environment-variables/#security-considerations)
