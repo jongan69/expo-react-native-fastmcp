@@ -124,6 +124,10 @@ print(results)
 
 ---
 
+## 🍾 Adding to Cursor
+
+Use the `mcp.json` file structure for using the MCP server in Cursor 
+
 ## 🧩 Extending
 
 - Add new Markdown files to `docs/` — they are auto-discovered.

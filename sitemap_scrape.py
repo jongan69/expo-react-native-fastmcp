@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-# Requires: pip install lxml
 
 # Define the sitemap URL
 expo_sitemap_url = 'https://docs.expo.dev/sitemap.xml'

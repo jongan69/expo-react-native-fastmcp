@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "expo-react-native-markdown-docs": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/jonathangan/Desktop/expo-mcp",
+                "run",
+                "server.py"
+            ]
+        }
+    }
+}

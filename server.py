@@ -1,4 +1,3 @@
-import mcp.types as types
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.resources.types import FileResource
 from pathlib import Path
@@ -7,7 +6,7 @@ import yaml
 from rapidfuzz import fuzz
 import logging
 
-mcp = FastMCP("Markdown Documentation Server")
+mcp = FastMCP("React Native Expo Markdown Documentation Server")
 docs_dir = Path("docs")
 
 # Setup logging
@@ -165,3 +164,4 @@ def get_doc_content(filename: str) -> str:
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+    # mcp.run()
