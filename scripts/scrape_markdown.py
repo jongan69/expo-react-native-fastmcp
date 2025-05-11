@@ -19,7 +19,7 @@ def scrape_markdown():
         filename = re.sub(r'[^a-zA-Z0-9_-]', '_', last_segment)
         return filename[:100]  # limit length for safety
 
-    os.makedirs("docs", exist_ok=True)
+    os.makedirs("../docs", exist_ok=True)
 
     for group, urls in all_urls.items():
         print(f"Processing group: {group}, {len(urls)} URLs")
