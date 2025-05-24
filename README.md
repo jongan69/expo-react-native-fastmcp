@@ -1,4 +1,4 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jongan69-expo-react-native-fastmcp-badge.png)](https://mseep.ai/app/jongan69-expo-react-native-fastmcp)
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/38b46a0b-bfca-4283-b568-e22c2c8b8152)
 
 # 📚 Expo React Native Markdown Documentation Server (MCP)
 
