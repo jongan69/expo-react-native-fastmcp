@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/two-tailed_swallowtail_s0jdo4.jpg)](https://mseep.ai/app/jongan69-expo-react-native-fastmcp)
+
 # 📚 Expo React Native Markdown Documentation Server (MCP)
 
 A fast, extensible, and intelligent documentation server for Markdown files using React Native Expo Documentation, powered by the MCP framework.
